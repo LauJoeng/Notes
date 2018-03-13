@@ -68,3 +68,116 @@ oracle中可以用 (+) 表示外连接，如：
 select e.last_name,e.department_id,d.department_name from employees e,departments d where e.department_id = d.department_id(+); (左连接)
 
 select e.last_name,e.department_id,d.department_name from employees e,departments d where e.department_id(+) = d.department_id;(右连接)
+<hr>
+**视图**:
+
+- 视图是一种虚表
+- 视图建立在已有表的基础上，视图赖以建立的这些表称为基表
+- 向视图提供数据内容的语句为select语句，可以将视图理解为存储起来的select语句
+- 视图是想用户提供数据的另一种表现形式
+
+为什么使用视图
+
+- 控制数据访问
+- 简化查询
+- 避免重复访问相同数据
+
+授予用户创建视图的权限:grant create view to "SCOTT";（注意双引号里大小写敏感）,或在OEM里面进行操作。
+
+对视图的增删改的操作也会影响基表的数据
+
+修改视图:使用create or replace view 修改 视图
+
+ex:
+create or replace view empview2
+(id_number,name,sal,department_id)
+as select employee_id,first_name || ' ' || last_name,salary,department_id
+from employees
+where department_id=80;
+
+限制视图操作.
+
+只读视图:
+create or replace view empview2
+as
+select employee_id id,last_name	department_name
+from employees e,departments d
+where e.department_id = d.department_id
+with read only;
+
+使用了组函数的视图属于复杂视图，复杂视图不能使用DML操作
+
+TOP-N分析:分析查询一个列中最大或最小的n个值
+
+rownum是查询出来结果的一个伪序列，即第几个。则可以通过rownum查询出前10个结果
+
+ex:
+select rownum employee_id,last_name,salary
+from (
+			select rownum employee_id,last_name,salary
+			from employees
+			order by salary desc
+)
+where rownum <= 10;
+
+上述语句，通过子查询获得salary排序的结果，在通过rownum查询出前10的结果
+
+注意:rownum只能使用<或 <= ,而= ,> , >= 都将不能返回任何数据
+
+查询salary排40-50之间的数据如下:
+
+select rn, employee_id,last_name,salary
+from(
+      select rownum rn ,employee_id,last_name,salary
+      from (
+            select rownum employee_id,last_name,salary
+            from employees
+            order by salary desc
+      )
+)
+where rn > 40 and rn <=50;
+
+将上面查询到的结果再一次作为一个子查询，则上面查询到的rownum就作为子查询的到的表中的一个普通的列，这样就可以间接的对rownum使用 > ,>= 等操作了。
+<hr>
+**序列**
+序列是可供多个用户用来产生唯一数值的数据库对象
+- 自动提供唯一的值
+- 共享对象
+- 主要用于提供主键值（相当于mysql中的auto_increment,这也是主要用途）
+- 将序列值装入内存可以提供访问效率
+
+创建序列
+
+create sequence se
+			[increment by n]  --每次增长的数值
+			[start with n]       --从哪个值开始
+			[{maxvalue n | nomaxvalue}]
+			[{minvalue n | nominvalue}]
+			[{cycle | nocycle}] --是否需要循环
+			[{cache n | nocahce}]  -- 是否需要缓存登录
+	
+**索引**
+- 一种独立于表的模式对象，可以存储在与表不同的磁盘或表空间中
+- 索引被破坏，不会对表产生影响，只会影响查询的速度
+- 索引一旦建立，Oracle系统会对其进行自动维护，而且Oracle管理系统决定何时使用索引，用户不用在查询语句中指定使用哪个索引
+- 在删除一个表时，所有基于该表的索引会自动被删除u
+- 通过指针加速Oracle服务器的查询速度
+- 通过快速定位数据的方法，减少磁盘I/O
+
+在一个或多个列上创建索引
+create index idx on table (column[,column]...);
+
+在表employees的列last_name上创建索引
+create index on emp_last_name_idx  on employees(last_name);
+
+**同义词**
+
+使用同义词访问相同的对象
+- 方便访问其他用户对象
+-  缩短对象名字的长度
+
+create [public] synoym name for object;
+
+
+如:create  synoym e for employees;
+select * from e; 
