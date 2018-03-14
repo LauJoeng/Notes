@@ -178,6 +178,47 @@ create index on emp_last_name_idx  on employees(last_name);
 
 create [public] synoym name for object;
 
-
 如:create  synoym e for employees;
 select * from e; 
+
+**Oracle其他操作:**
+
+创建用户
+
+create user username identified by password；
+
+授予用户权限
+
+grant privilege to user;
+
+为用户分配表空间
+
+alter user yang quota unlimited on users;（user为用户名，users为表空间）
+
+创建角色并赋予权限
+
+创建角色:create role manager;
+
+为角色赋予权限:grant create table,create view to manager;
+
+将角色赋予用户:grant manager to dehaan,kochar;
+
+分配对象权限
+
+grant select on employees to sue,rich;为用户分配employees表的查询权限.
+
+with grant option和public关键字
+
+with grant option:（使用户同样具有分配权限的权利）
+
+grant select on employees to sue,rich with grantoption ;
+     
+ 向数据库中所有用户分配权限
+grant select on alice.departments to public ;
+
+收回对象权限:
+
+revoke privilege  on object from user [casecade constraints ];
+
+ 
+
