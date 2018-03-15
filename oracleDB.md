@@ -220,5 +220,98 @@ grant select on alice.departments to public ;
 
 revoke privilege  on object from user [casecade constraints ];
 
- 
+ **PL/SQL**
+先开启:set serveroutput on
 
+PL/SQL程序由声明部分、执行部分、异常处理部分三部分组成。
+
+PL/SQL块的结构如下
+
+declare
+/*声明部分，在此声明PL/SQL用到的变量，类型及游标，以及局部变量的存储过程和函数*/
+begin
+  /*执行部分:过程及SQL语句，即程序的主要部分*/
+exception
+ /*执行异常部分，错误处理*/
+end
+
+其中执行部分是必须的
+
+
+可以用%type，%rowtype定义变量
+
+如:
+
+```
+declare
+  v_sal employees.salary%type;
+  v_email employees.email%type;
+  v_hiredateemployees.hire_date%type;
+begin
+        select salary,email,hire_date into v_sal,v_email,v_hiredate from employees where employee_id=100;
+        dbms_output.put_line(v_sal||','||v_email||','||v_hiredate);
+end;
+```
+用%type定义变量的好处是
+- 所引用的数据库列的数据类型不必知道
+- 所引用的数据库列的数据类型可以实时改变
+
+记录类型:记录类型是把逻辑相关的数据单元作为一个单元存储起来，称作PL/SQL record的域(FIELD),其作用是存放互不相同但逻辑相关的信息，有点像Java中的类
+
+声明一个记录类型:type ...
+ex:
+
+```
+declare
+--定义一个记录类型
+  type emp_record is record(
+  v_sal employees.salary%type,
+  v_email employees.email%type,
+  v_hire_date employees.hire_date%type
+  );
+--定义一个记录类型的成员变量
+    v_emp_record emp_record;
+begin
+        select salary,email,hire_date into v_emp_record from employees where employee_id=100;
+        dbms_output.put_line(v_emp_record.v_sal||','||v_emp_record.v_email||','||v_emp_record.v_hire_date);
+end;
+```
+或
+```
+declare
+/*
+  type emp_record is record(
+  v_sal number(8,2):=0,
+  v_emp_id number(10)
+  );
+  */
+  --定义一个记录类型的成员变量，该变量对应表的结构
+  v_emp_record employees%rowtype;
+begin
+  select * into v_emp_record from employees  where employee_id=123;
+  dbms_output.put_line('employee_id:'||v_emp_record.employee_id||','||'salary:'||v_emp_record.salary);
+--exception
+  
+end;
+```
+
+l流程控制
+
+条件判断(两种)
+方式1：if ... than elseif than ... else ... end if;
+方式2:   case ... when ... then ... end;
+
+循环结构(三种)
+方式1:loop ... exit when ... end loop;
+方式2 :while ... loop ... end loop;
+方式3:for i in ... loop ... end loop;
+
+goto语句相当于break,exit退出
+
+游标的使用（类似java中的Iterator）
+
+异常处理(三种方法)
+
+前面知识都使与为存储函数(有返回值)和存储过程有(无返回值）
+
+触发器的概念
