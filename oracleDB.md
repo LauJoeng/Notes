@@ -299,18 +299,359 @@ l流程控制
 
 条件判断(两种)
 方式1：if ... than elseif than ... else ... end if;
+
+ex:
+
+```
+declare
+  v_sal employees.salary%type;
+begin
+  select salary into v_sal from employees where employee_id=150;
+  
+  if v_sal >= 10000 then dbms_output.put_line('salary >= 10000');
+  elsif v_sal >= 5000 then dbms_output.put_line('5000 <= salary <= 10000');
+  else dbms_output.put_line('salary < 5000');
+  end if;
+end;
+```
+
 方式2:   case ... when ... then ... end;
+
+ed
+
+```
+declare
+  v_sal employees.salary%type;
+  v_temp varchar2(30);
+begin
+  select salary into v_sal from employees where employee_id=150;
+  v_temp :=
+  case trunc(v_sal/5000) when 0 then 'salary < 5000'
+                         when 1 then  ' 5000 <= salary <= 10000'
+                         else 'salary >= 10000'
+  end;
+  dbms_output.put_line(v_sal || ',' || v_temp);
+end;
+```
 
 循环结构(三种)
 方式1:loop ... exit when ... end loop;
+
+```
+declare
+  v_i number(5) := 1;
+begin
+  loop
+    -- 循环体
+    dbms_output.put_line(v_i);
+    -- 循环条件
+  exit when v_i >= 100;
+       --迭代条件
+       v_i := v_i+1;
+  end loop;
+end
+```
 方式2 :while ... loop ... end loop;
+```
+declare
+  v_i number(5) := 1;
+begin
+  while v_i <= 100 loop
+    dbms_output.put_line(v_i);
+    v_i := v_i+1;
+  end loop;
+end;
+```
+
 方式3:for i in ... loop ... end loop;
+```
+begin
+  for c in 1..100 loop
+    dbms_output.put_line(c);
+  end loop;
+end;
+
+//或者反着来
+
+begin
+  for c in  reverse 1..100 loop
+    dbms_output.put_line(c);
+  end loop;
+end;
+```
+如下程序输出1到100以内的质数
+```
+declare
+  v_i number(3) := 2;
+  v_j number(3) := 2;
+  v_flag number(1) := 1;
+begin
+  while v_i <= 100 loop
+    while v_j <= sqrt(v_i) loop
+        if mod(v_i,v_j) = 0 then v_flag := 0;
+        end if;
+        v_j := v_j + 1;
+      end loop;
+      
+      if v_flag = 1 then dbms_output.put_line(v_i);
+      end if;
+      
+      v_j := 2;
+      v_i := v_i+1;
+      v_flag := 1;
+  end loop;
+end;
+
+//或者使用for完成
+
+declare
+  v_flag number(1) := 1;
+begin
+  for v_i in 2..100 loop
+    for v_j in 2..sqrt(v_i) loop
+      if mod(v_i,v_j) = 0 then v_flag := 0;
+      end if;
+    end loop;
+    if v_flag = 1 then dbms_output.put_line(v_i);
+    end if;
+    v_flag := 1;
+  end loop;
+end;
+```
 
 goto语句相当于break,exit退出
+```
+在语句中添加label,然后就可以使用goto调到指定位置
 
+declare
+  v_flag number(1) := 1;
+begin
+  for v_i in 2..100 loop
+    for v_j in 2..sqrt(v_i) loop
+      if mod(v_i,v_j) = 0 then v_flag := 0;
+      goto lable;
+      end if;
+    end loop;
+    <<lable>>
+    if v_flag = 1 then dbms_output.put_line(v_i);
+    end if;
+    v_flag := 1;
+  end loop;
+end;
+```
+
+```
+declare
+  v_flag number(1) := 1;
+begin
+  for i in 1..100 loop
+    if i = 50 then dbms_output.put_line('打印结束');
+    exit;
+    end if;
+    dbms_output.put_line(i);
+    
+  end loop;
+end;
+```
 游标的使用（类似java中的Iterator）
 
+在PL/SQL程序中，对于处理**多行记录**的事务经常使用游标来使用
+
+显示游标处理，四个步骤
+
+- 定义游标
+- 打开游标
+- 提取游标数据
+- 对该记录进行处理
+- 继续处理，知道活动集合中记录
+- 关闭游标
+
+```
+declare
+  v_sal employees.salary%type;
+  v_empid employees.employee_id%type;
+  --定义游标
+  cursor emp_sal_cursor is select employee_id,salary from employees where department_id = 80;
+begin
+  --打开游标
+  open emp_sal_cursor;
+  
+  --提取游标
+  fetch emp_sal_cursor into v_sal,v_empid;
+  
+  while emp_sal_cursor%found loop
+    dbms_output.put_line('emp_id'||v_empid||','||'salary' || v_sal);
+    fetch emp_sal_cursor into v_sal,v_empid;
+  end loop;
+  
+  --关闭游标
+  close emp_sal_cursor;
+end;
+
+```
+
+游标属性
+
+- %found 布尔属性,当最近一次读记录时成功返回，则值为true
+- %notfound 布尔属性，与%found相反
+- %isopen 布尔属性，当游标已经打开时返回true
+- %rowcount 数字属性，返回已从游标中读取的记录数 
+
+可以直接对游标使用for语句 (类似于Java中的Iterator)
+```
+declare
+  v_sal employees.salary%type;
+  v_empid employees.employee_id%type;
+  --定义游标
+  cursor emp_sal_cursor is select employee_id,salary from employees where department_id = 80;
+begin
+ 
+  for c in emp_sal_cursor loop
+    dbms_output.put_line('emp_id'||c.employee_id||','||'salary' || c.salary);
+    end loop;
+end;
+```
+
+```
+/*
+利用游标批量更新员工工资
+*/
+declare
+  cursor emp_sal_cursor is select employee_id,salary from employees;
+  v_temp number(4,2);
+  v_empid employees.employee_id%type;
+  v_sal employees.salary%type;
+  
+begin
+  open emp_sal_cursor;
+  fetch emp_sal_cursor into v_empid,v_sal;
+  
+  while emp_sal_cursor%found loop
+    if v_sal < 5000 then  v_temp := 0.05;
+    elsif v_sal < 10000 then v_temp:= 0.03;
+    elsif v_sal < 15000 then v_temp := 0.02;
+    else v_temp := 0.01;
+    end if;
+    
+    dbms_output.put_line(v_sal);
+    update  employees
+    set salary = salary + (1+v_temp)
+    where employee_id = v_empid;
+    
+    fetch emp_sal_cursor into v_empid,v_sal;
+   end loop;
+   close emp_sal_cursor;
+end;
+
+//或者使用for循环实现（此种方法简单一些）
+
+declare
+  cursor emp_sal_cursor is select employee_id,salary from employees;
+  v_temp number(4,2);
+begin
+  for c in emp_sal_cursor loop
+    if c.salary < 5000 then v_temp := 0.05;
+    elsif c.salary <10000 then v_temp := 0.03;
+    elsif c.salary <15000 v_temp := 0.02;
+    else v_temp := 0.01;
+    end if
+    
+    update employees
+    set salary = salary * (1+v_temp)
+    where employee_id = c.employee_id;
+  end loop;
+   
+end;
+```
+
+带参数的游标
+```
+
+declare
+  cursor emp_sal_cursor(dept_id number,sal number) is 
+  select employee_id,salary 
+  from employees
+  where department_id = dept_id and salry > sal;
+  v_temp number(4,2);
+begin
+  for c in emp_sal_cursor(sal => 4000,dept => 80) loop
+    if c.salary < 5000 then v_temp := 0.05;
+    elsif c.salary <10000 then v_temp := 0.03;
+    elsif c.salary <15000 v_temp := 0.02;
+    else v_temp := 0.01;
+    end if
+    
+    update employees
+    set salary = salary * (1+v_temp)
+    where employee_id = c.employee_id;
+  end loop;
+   
+end;
+```
+
+隐式游标
+```
+begin 
+   update employees
+   set salary = salary + 10
+   where employee_id = 1001;
+   
+   if sql%notfound then dbms_output.put_line('查无此人');
+   end if;
+end;
+
+```
+
 异常处理(三种方法)
+
+预定义异常
+```
+declare
+  v_salary employees.salary%type;
+begin
+  select salary into v_salary 
+  from employees
+  where employee_id > 100;
+  
+  dbms_output.put_line(v_salary);
+exception
+  when too_many_rows then dbms_output.put_line('输出行数太多了');
+  when others then dbms_output.put_line('出现其他类型的异常了'); 
+end;
+```
+
+非预定义异常
+```
+declare
+--定义异常
+  e_deleteid_exception exception;
+  --将已经定义好的异常类型与标准的Oracle错误联系起来
+  pragma exception_init(e_deleteid_exception,-2292);
+begin
+  delete from employees where employee_id = 100;
+exception
+  when e_deleteid_exception then dbms_output.put_line('违反完整性约束条件，故不可删除此此用户');
+end;
+```
+
+用户自定义异常(相当于Java中的throw异常，只不过这里使用的是raise)
+```
+declare
+  e_too_high_sal exception;
+  v_sal employees.salary%type;
+  
+begin
+  select salary into v_sal from employees where employee_id = 100;
+  
+  if v_sal > 10000 then 
+    raise e_too_high_sal;
+    end if;
+    
+exception
+  when e_too_high_sal then dbms_output.put_line('工资太高了');
+end;
+
+```
 
 前面知识都使与为存储函数(有返回值)和存储过程有(无返回值）
 
