@@ -655,4 +655,167 @@ end;
 
 前面知识都使与为存储函数(有返回值)和存储过程有(无返回值）
 
+函数和存储过程的区别是，函数必须有返回值，存储过程可以不带返回值，但是存储过程可以通过out型参数间接实现返回值
+
+函数:
+
+```
+create or replace function fun_name(dept_id number,salary number)
+return number
+is 
+       --函数使用过程中，需要声明的变量，记录类型和游标
+begin
+       --函数体
+exception
+       --处理函数执行过程中的异常
+end;
+```
+
+```
+//返回指定部门号的总工资，部门号作为参数
+create or replace function get_sal(dept_id number)
+return number
+is
+   v_sumsal number(10) := 0;
+   cursor salary_cursor is select salary from employees where department_id = dept_id;
+begin
+  for c in salary_cursor loop
+    v_sumsal := v_sumsal + c.salary;
+  end loop;
+  
+  return v_sumsal;
+end;
+```
+函数的out型参数：因为函数只能有一个返回值，PL/SQL程序可以通过out型参数实现有多个返回值，传递参数时默认使用in型参数，表示函数在执行过程中该参数值不糊改变，out标记参数表示一个值在函数中进行计算并通过该参数传递给调用语句；in out 标记表示传递给函数的值可以变化并传递个调用语句，若省略标记，则参树隐含为in
+
+ex:
+```
+create or replace function get_sal(dept_id number,total_count out number)
+return number
+is
+   v_sumsal number(10) := 0;
+   cursor salary_cursor is select salary from employees where department_id = dept_id;
+begin
+  total_count := 0;
+  for c in salary_cursor loop
+    v_sumsal := v_sumsal + c.salary;
+    total_count := total_count+1;
+  end loop;
+  
+  return v_sumsal;
+end;
+
+//执行
+declare
+  v_num number(5) := 0;
+begin 
+  dbms_output.put_line(get_sal(80,v_num));
+  dbms_output.put_line(v_num);
+  
+end;
+```
+存储过程
+```
+create or replace procedure get_sal2(dept_id number,sumsal out number)
+is
+   cursor salary_cursor is select salary from employees where department_id = dept_id;
+begin
+  sumsal := 0;
+  for c in salary_cursor loop
+    sumsal := sumsal + c.salary;
+  end loop;
+  dbms_output.put_line(sumsal);
+end;
+```
+
+```
+--对给定部门（id作为输入参数）的员工进行加薪操作，根据在公司任期进行不同幅度的加薪操作
+-- 得到以下返回结果：为此次加薪公司每月需要额外付出多少成本，定义一个out型输出参数
+
+create or replace procedure add_sal(dept_id number,temp_sal out number)
+is
+  cursor sal_cursor is select employee_id,salary,hire_date from employees where department_id = dept_id;
+  v_i number(4,2) := 0;
+begin 
+  temp_sal := 0;
+  for c in sal_cursor loop
+    if to_char(c.hire_date,'yyyy') < '1995' then v_i := 0.05;
+    elsif to_char(c.hire_date,'yyyy') < '1998' then v_i := 0.03;
+    else v_i := 0.01;
+    end if;
+    
+    update employees set salary = salary *(1+v_i) where employee_id = c.employee_id;
+    temp_sal := temp_sal + c.salary * v_i; 
+  end loop;
+  
+  dbms_output.put_line(temp_sal);
+end;
+    
+    
+
+//执行
+declare
+ v_temp number(10) := 0;
+begin 
+  add_sal(80,v_temp);
+  
+end;
+```
 触发器的概念
+
+触发器是许多关系型数据库都提供的一项技术，在Oracle系统里，触发器类似过程和函数，都有声明，执行和异常处理过程的PL/SQL块
+
+触发器在数据库里以独立的对象存储，它与存储过程不同的是，存储过程通过其他程序来启动运行或直接启动运行，而触发器是由一个事件来启动运行，即触发器是当某个事件发生时自动的隐式运行，触发器不能接受参数。
+
+触发器的组成
+
+- 触发事件
+- 触发时间
+- 触发器本身
+- 触发频率
+
+创建触发器的一般语法是：
+create [or replace]trigger trigger_name
+{before | after}
+{insert | delete |update [of column [,column... ] ]}
+on [schema.]table_name
+[for each row]
+[when condition]
+trigger_body;
+
+ex:
+```
+create or replace trigger update_emp_trigger1
+after
+  update on employees
+--for each row//这里表示每次update都会触发，如果没有这一行表示只在最后一次update触发
+begin 
+  dbms_output.put_line('hello world');
+end;     
+
+``` 
+可以在触发器中使用；:old.name , :new.name  来获取操作之前和操作之后的值
+
+ex:
+```
+//输出更新之前的salary和更新之后的salary
+create or replace trigger update_emp_trigger2
+after
+  update on emp
+for each row
+begin
+  dbms_output.put_line('old:salary:'||:old.salary ||','||'new salary:'||:new.salary);
+end;
+```
+
+```
+//当表my_emp删除一条数据时就把这条数据插入待my_emp_bak
+create or replace trigger delete_emp_trigger
+before
+delete on my_emp
+for each row
+begin
+  insert into my_emp_bak
+  values(:old.employee_id,:old_salary);
+end;
+```
