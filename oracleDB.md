@@ -148,12 +148,17 @@ where rn > 40 and rn <=50;
 
 创建序列
 
-create sequence se
+			create sequence se
 			[increment by n]  --每次增长的数值
+
 			[start with n]       --从哪个值开始
+
 			[{maxvalue n | nomaxvalue}]
+
 			[{minvalue n | nominvalue}]
+
 			[{cycle | nocycle}] --是否需要循环
+
 			[{cache n | nocahce}]  -- 是否需要缓存登录
 	
 **索引**
@@ -242,16 +247,16 @@ end
 
 如:
 
-```
-declare
-  v_sal employees.salary%type;
-  v_email employees.email%type;
-  v_hiredateemployees.hire_date%type;
-begin
-        select salary,email,hire_date into v_sal,v_email,v_hiredate from employees where employee_id=100;
-        dbms_output.put_line(v_sal||','||v_email||','||v_hiredate);
-end;
-```
+
+	declare
+	  v_sal employees.salary%type;
+	  v_email employees.email%type;
+	  v_hiredateemployees.hire_date%type;
+	begin
+	        select salary,email,hire_date into v_sal,v_email,v_hiredate from employees where employee_id=100;
+	        dbms_output.put_line(v_sal||','||v_email||','||v_hiredate);
+	end;
+
 用%type定义变量的好处是
 - 所引用的数据库列的数据类型不必知道
 - 所引用的数据库列的数据类型可以实时改变
@@ -261,39 +266,38 @@ end;
 声明一个记录类型:type ...
 ex:
 
-```
-declare
---定义一个记录类型
-  type emp_record is record(
-  v_sal employees.salary%type,
-  v_email employees.email%type,
-  v_hire_date employees.hire_date%type
-  );
---定义一个记录类型的成员变量
-    v_emp_record emp_record;
-begin
-        select salary,email,hire_date into v_emp_record from employees where employee_id=100;
-        dbms_output.put_line(v_emp_record.v_sal||','||v_emp_record.v_email||','||v_emp_record.v_hire_date);
-end;
-```
+
+	declare
+	--定义一个记录类型
+	  type emp_record is record(
+	  v_sal employees.salary%type,
+	  v_email employees.email%type,
+	  v_hire_date employees.hire_date%type
+	  );
+	--定义一个记录类型的成员变量
+	    v_emp_record emp_record;
+	begin
+	        select salary,email,hire_date into v_emp_record from employees where employee_id=100;
+	        dbms_output.put_line(v_emp_record.v_sal||','||v_emp_record.v_email||','||v_emp_record.v_hire_date);
+	end;
+
 或
-```
-declare
-/*
-  type emp_record is record(
-  v_sal number(8,2):=0,
-  v_emp_id number(10)
-  );
-  */
-  --定义一个记录类型的成员变量，该变量对应表的结构
-  v_emp_record employees%rowtype;
-begin
-  select * into v_emp_record from employees  where employee_id=123;
-  dbms_output.put_line('employee_id:'||v_emp_record.employee_id||','||'salary:'||v_emp_record.salary);
---exception
-  
-end;
-```
+
+	declare
+	/*
+	  type emp_record is record(
+	  v_sal number(8,2):=0,
+	  v_emp_id number(10)
+	  );
+	  */
+	  --定义一个记录类型的成员变量，该变量对应表的结构
+	  v_emp_record employees%rowtype;
+	begin
+	  select * into v_emp_record from employees  where employee_id=123;
+	  dbms_output.put_line('employee_id:'||v_emp_record.employee_id||','||'salary:'||v_emp_record.salary);
+	--exception
+	  
+	end;
 
 l流程控制
 
@@ -337,122 +341,121 @@ end;
 循环结构(三种)
 方式1:loop ... exit when ... end loop;
 
-```
-declare
-  v_i number(5) := 1;
-begin
-  loop
-    -- 循环体
-    dbms_output.put_line(v_i);
-    -- 循环条件
-  exit when v_i >= 100;
-       --迭代条件
-       v_i := v_i+1;
-  end loop;
-end
-```
+
+	declare
+	  v_i number(5) := 1;
+	begin
+	  loop
+	    -- 循环体
+	    dbms_output.put_line(v_i);
+	    -- 循环条件
+	  exit when v_i >= 100;
+	       --迭代条件
+	       v_i := v_i+1;
+	  end loop;
+	end
+
 方式2 :while ... loop ... end loop;
-```
-declare
-  v_i number(5) := 1;
-begin
-  while v_i <= 100 loop
-    dbms_output.put_line(v_i);
-    v_i := v_i+1;
-  end loop;
-end;
-```
+	
+	declare
+	  v_i number(5) := 1;
+	begin
+	  while v_i <= 100 loop
+	    dbms_output.put_line(v_i);
+	    v_i := v_i+1;
+	  end loop;
+	end;
 
-方式3:for i in ... loop ... end loop;
-```
-begin
-  for c in 1..100 loop
-    dbms_output.put_line(c);
-  end loop;
-end;
 
-//或者反着来
+	方式3:for i in ... loop ... end loop;
+	
+	begin
+	  for c in 1..100 loop
+	    dbms_output.put_line(c);
+	  end loop;
+	end;
+	
+	//或者反着来
+	
+	begin
+	  for c in  reverse 1..100 loop
+	    dbms_output.put_line(c);
+	  end loop;
+	end;
 
-begin
-  for c in  reverse 1..100 loop
-    dbms_output.put_line(c);
-  end loop;
-end;
-```
 如下程序输出1到100以内的质数
-```
-declare
-  v_i number(3) := 2;
-  v_j number(3) := 2;
-  v_flag number(1) := 1;
-begin
-  while v_i <= 100 loop
-    while v_j <= sqrt(v_i) loop
-        if mod(v_i,v_j) = 0 then v_flag := 0;
-        end if;
-        v_j := v_j + 1;
-      end loop;
-      
-      if v_flag = 1 then dbms_output.put_line(v_i);
-      end if;
-      
-      v_j := 2;
-      v_i := v_i+1;
-      v_flag := 1;
-  end loop;
-end;
 
-//或者使用for完成
+	declare
+	  v_i number(3) := 2;
+	  v_j number(3) := 2;
+	  v_flag number(1) := 1;
+	begin
+	  while v_i <= 100 loop
+	    while v_j <= sqrt(v_i) loop
+	        if mod(v_i,v_j) = 0 then v_flag := 0;
+	        end if;
+	        v_j := v_j + 1;
+	      end loop;
+	      
+	      if v_flag = 1 then dbms_output.put_line(v_i);
+	      end if;
+	      
+	      v_j := 2;
+	      v_i := v_i+1;
+	      v_flag := 1;
+	  end loop;
+	end;
+	
+	//或者使用for完成
+	
+	declare
+	  v_flag number(1) := 1;
+	begin
+	  for v_i in 2..100 loop
+	    for v_j in 2..sqrt(v_i) loop
+	      if mod(v_i,v_j) = 0 then v_flag := 0;
+	      end if;
+	    end loop;
+	    if v_flag = 1 then dbms_output.put_line(v_i);
+	    end if;
+	    v_flag := 1;
+	  end loop;
+	end;
 
-declare
-  v_flag number(1) := 1;
-begin
-  for v_i in 2..100 loop
-    for v_j in 2..sqrt(v_i) loop
-      if mod(v_i,v_j) = 0 then v_flag := 0;
-      end if;
-    end loop;
-    if v_flag = 1 then dbms_output.put_line(v_i);
-    end if;
-    v_flag := 1;
-  end loop;
-end;
-```
 
 goto语句相当于break,exit退出
-```
+
 在语句中添加label,然后就可以使用goto调到指定位置
 
-declare
-  v_flag number(1) := 1;
-begin
-  for v_i in 2..100 loop
-    for v_j in 2..sqrt(v_i) loop
-      if mod(v_i,v_j) = 0 then v_flag := 0;
-      goto lable;
-      end if;
-    end loop;
-    <<lable>>
-    if v_flag = 1 then dbms_output.put_line(v_i);
-    end if;
-    v_flag := 1;
-  end loop;
-end;
-```
+	declare
+	  v_flag number(1) := 1;
+	begin
+	  for v_i in 2..100 loop
+	    for v_j in 2..sqrt(v_i) loop
+	      if mod(v_i,v_j) = 0 then v_flag := 0;
+	      goto lable;
+	      end if;
+	    end loop;
+	    <<lable>>
+	    if v_flag = 1 then dbms_output.put_line(v_i);
+	    end if;
+	    v_flag := 1;
+	  end loop;
+	end;
 
-```
-declare
-  v_flag number(1) := 1;
-begin
-  for i in 1..100 loop
-    if i = 50 then dbms_output.put_line('打印结束');
-    exit;
-    end if;
-    dbms_output.put_line(i);
-    
-  end loop;
-end;
-```
+
+	declare
+	  v_flag number(1) := 1;
+	begin
+	  for i in 1..100 loop
+	    if i = 50 then dbms_output.put_line('打印结束');
+	    exit;
+	    end if;
+	    dbms_output.put_line(i);
+	    
+	  end loop;
+	end;
+
 游标的使用（类似java中的Iterator）
 
 在PL/SQL程序中，对于处理**多行记录**的事务经常使用游标来使用
@@ -467,26 +470,26 @@ end;
 - 关闭游标
 
 ```
-declare
-  v_sal employees.salary%type;
-  v_empid employees.employee_id%type;
-  --定义游标
-  cursor emp_sal_cursor is select employee_id,salary from employees where department_id = 80;
-begin
-  --打开游标
-  open emp_sal_cursor;
-  
-  --提取游标
-  fetch emp_sal_cursor into v_sal,v_empid;
-  
-  while emp_sal_cursor%found loop
-    dbms_output.put_line('emp_id'||v_empid||','||'salary' || v_sal);
-    fetch emp_sal_cursor into v_sal,v_empid;
-  end loop;
-  
-  --关闭游标
-  close emp_sal_cursor;
-end;
+	declare
+	  v_sal employees.salary%type;
+	  v_empid employees.employee_id%type;
+	  --定义游标
+	  cursor emp_sal_cursor is select employee_id,salary from employees where department_id = 80;
+	begin
+	  --打开游标
+	  open emp_sal_cursor;
+	  
+	  --提取游标
+	  fetch emp_sal_cursor into v_sal,v_empid;
+	  
+	  while emp_sal_cursor%found loop
+	    dbms_output.put_line('emp_id'||v_empid||','||'salary' || v_sal);
+	    fetch emp_sal_cursor into v_sal,v_empid;
+	  end loop;
+	  
+	  --关闭游标
+	  close emp_sal_cursor;
+	end;
 
 ```
 
@@ -498,109 +501,105 @@ end;
 - %rowcount 数字属性，返回已从游标中读取的记录数 
 
 可以直接对游标使用for语句 (类似于Java中的Iterator)
-```
-declare
-  v_sal employees.salary%type;
-  v_empid employees.employee_id%type;
-  --定义游标
-  cursor emp_sal_cursor is select employee_id,salary from employees where department_id = 80;
-begin
- 
-  for c in emp_sal_cursor loop
-    dbms_output.put_line('emp_id'||c.employee_id||','||'salary' || c.salary);
-    end loop;
-end;
-```
 
-```
-/*
-利用游标批量更新员工工资
-*/
-declare
-  cursor emp_sal_cursor is select employee_id,salary from employees;
-  v_temp number(4,2);
-  v_empid employees.employee_id%type;
-  v_sal employees.salary%type;
-  
-begin
-  open emp_sal_cursor;
-  fetch emp_sal_cursor into v_empid,v_sal;
-  
-  while emp_sal_cursor%found loop
-    if v_sal < 5000 then  v_temp := 0.05;
-    elsif v_sal < 10000 then v_temp:= 0.03;
-    elsif v_sal < 15000 then v_temp := 0.02;
-    else v_temp := 0.01;
-    end if;
-    
-    dbms_output.put_line(v_sal);
-    update  employees
-    set salary = salary + (1+v_temp)
-    where employee_id = v_empid;
-    
-    fetch emp_sal_cursor into v_empid,v_sal;
-   end loop;
-   close emp_sal_cursor;
-end;
+	declare
+	  v_sal employees.salary%type;
+	  v_empid employees.employee_id%type;
+	  --定义游标
+	  cursor emp_sal_cursor is select employee_id,salary from employees where department_id = 80;
+	begin
+	 
+	  for c in emp_sal_cursor loop
+	    dbms_output.put_line('emp_id'||c.employee_id||','||'salary' || c.salary);
+	    end loop;
+	end;
 
-//或者使用for循环实现（此种方法简单一些）
 
-declare
-  cursor emp_sal_cursor is select employee_id,salary from employees;
-  v_temp number(4,2);
-begin
-  for c in emp_sal_cursor loop
-    if c.salary < 5000 then v_temp := 0.05;
-    elsif c.salary <10000 then v_temp := 0.03;
-    elsif c.salary <15000 v_temp := 0.02;
-    else v_temp := 0.01;
-    end if
-    
-    update employees
-    set salary = salary * (1+v_temp)
-    where employee_id = c.employee_id;
-  end loop;
-   
-end;
-```
+	/*
+	利用游标批量更新员工工资
+	*/
+	declare
+	  cursor emp_sal_cursor is select employee_id,salary from employees;
+	  v_temp number(4,2);
+	  v_empid employees.employee_id%type;
+	  v_sal employees.salary%type;
+	  
+	begin
+	  open emp_sal_cursor;
+	  fetch emp_sal_cursor into v_empid,v_sal;
+	  
+	  while emp_sal_cursor%found loop
+	    if v_sal < 5000 then  v_temp := 0.05;
+	    elsif v_sal < 10000 then v_temp:= 0.03;
+	    elsif v_sal < 15000 then v_temp := 0.02;
+	    else v_temp := 0.01;
+	    end if;
+	    
+	    dbms_output.put_line(v_sal);
+	    update  employees
+	    set salary = salary + (1+v_temp)
+	    where employee_id = v_empid;
+	    
+	    fetch emp_sal_cursor into v_empid,v_sal;
+	   end loop;
+	   close emp_sal_cursor;
+	end;
+	
+	//或者使用for循环实现（此种方法简单一些）
+	
+	declare
+	  cursor emp_sal_cursor is select employee_id,salary from employees;
+	  v_temp number(4,2);
+	begin
+	  for c in emp_sal_cursor loop
+	    if c.salary < 5000 then v_temp := 0.05;
+	    elsif c.salary <10000 then v_temp := 0.03;
+	    elsif c.salary <15000 v_temp := 0.02;
+	    else v_temp := 0.01;
+	    end if
+	    
+	    update employees
+	    set salary = salary * (1+v_temp)
+	    where employee_id = c.employee_id;
+	  end loop;
+	   
+	end;
+
 
 带参数的游标
-```
+	declare
+	  cursor emp_sal_cursor(dept_id number,sal number) is 
+	  select employee_id,salary 
+	  from employees
+	  where department_id = dept_id and salry > sal;
+	  v_temp number(4,2);
+	begin
+	  for c in emp_sal_cursor(sal => 4000,dept => 80) loop
+	    if c.salary < 5000 then v_temp := 0.05;
+	    elsif c.salary <10000 then v_temp := 0.03;
+	    elsif c.salary <15000 v_temp := 0.02;
+	    else v_temp := 0.01;
+	    end if
+	    
+	    update employees
+	    set salary = salary * (1+v_temp)
+	    where employee_id = c.employee_id;
+	  end loop;
+	   
+	end;
 
-declare
-  cursor emp_sal_cursor(dept_id number,sal number) is 
-  select employee_id,salary 
-  from employees
-  where department_id = dept_id and salry > sal;
-  v_temp number(4,2);
-begin
-  for c in emp_sal_cursor(sal => 4000,dept => 80) loop
-    if c.salary < 5000 then v_temp := 0.05;
-    elsif c.salary <10000 then v_temp := 0.03;
-    elsif c.salary <15000 v_temp := 0.02;
-    else v_temp := 0.01;
-    end if
-    
-    update employees
-    set salary = salary * (1+v_temp)
-    where employee_id = c.employee_id;
-  end loop;
-   
-end;
-```
 
 隐式游标
-```
-begin 
-   update employees
-   set salary = salary + 10
-   where employee_id = 1001;
-   
-   if sql%notfound then dbms_output.put_line('查无此人');
-   end if;
-end;
+	begin 
+	   update employees
+	   set salary = salary + 10
+	   where employee_id = 1001;
+	   
+	   if sql%notfound then dbms_output.put_line('查无此人');
+	   end if;
+	end;
 
-```
+
 
 异常处理(三种方法)
 
@@ -690,76 +689,76 @@ end;
 
 ex:
 ```
-create or replace function get_sal(dept_id number,total_count out number)
-return number
-is
-   v_sumsal number(10) := 0;
-   cursor salary_cursor is select salary from employees where department_id = dept_id;
-begin
-  total_count := 0;
-  for c in salary_cursor loop
-    v_sumsal := v_sumsal + c.salary;
-    total_count := total_count+1;
-  end loop;
-  
-  return v_sumsal;
-end;
-
-//执行
-declare
-  v_num number(5) := 0;
-begin 
-  dbms_output.put_line(get_sal(80,v_num));
-  dbms_output.put_line(v_num);
-  
-end;
+	create or replace function get_sal(dept_id number,total_count out number)
+	return number
+	as
+	   v_sumsal number(10) := 0;
+	   cursor salary_cursor is select salary from employees where department_id = dept_id;
+	begin
+	  total_count := 0;
+	  for c in salary_cursor loop
+	    v_sumsal := v_sumsal + c.salary;
+	    total_count := total_count+1;
+	  end loop;
+	  
+	  return v_sumsal;
+	end;
+	
+	//执行
+	declare
+	  v_num number(5) := 0;
+	begin 
+	  dbms_output.put_line(get_sal(80,v_num));
+	  dbms_output.put_line(v_num);
+	  
+	end;
 ```
 存储过程
 ```
-create or replace procedure get_sal2(dept_id number,sumsal out number)
-is
-   cursor salary_cursor is select salary from employees where department_id = dept_id;
-begin
-  sumsal := 0;
-  for c in salary_cursor loop
-    sumsal := sumsal + c.salary;
-  end loop;
-  dbms_output.put_line(sumsal);
-end;
+	create or replace procedure get_sal2(dept_id number,sumsal out number)
+	as
+	   cursor salary_cursor is select salary from employees where department_id = dept_id;
+	begin
+	  sumsal := 0;
+	  for c in salary_cursor loop
+	    sumsal := sumsal + c.salary;
+	  end loop;
+	  dbms_output.put_line(sumsal);
+	end;
 ```
 
 ```
 --对给定部门（id作为输入参数）的员工进行加薪操作，根据在公司任期进行不同幅度的加薪操作
 -- 得到以下返回结果：为此次加薪公司每月需要额外付出多少成本，定义一个out型输出参数
 
-create or replace procedure add_sal(dept_id number,temp_sal out number)
-is
-  cursor sal_cursor is select employee_id,salary,hire_date from employees where department_id = dept_id;
-  v_i number(4,2) := 0;
-begin 
-  temp_sal := 0;
-  for c in sal_cursor loop
-    if to_char(c.hire_date,'yyyy') < '1995' then v_i := 0.05;
-    elsif to_char(c.hire_date,'yyyy') < '1998' then v_i := 0.03;
-    else v_i := 0.01;
-    end if;
-    
-    update employees set salary = salary *(1+v_i) where employee_id = c.employee_id;
-    temp_sal := temp_sal + c.salary * v_i; 
-  end loop;
-  
-  dbms_output.put_line(temp_sal);
-end;
+	create or replace procedure add_sal(dept_id number,temp_sal out number)
+	is
+	  cursor sal_cursor is select employee_id,salary,hire_date from employees where department_id = dept_id;
+	  v_i number(4,2) := 0;
+	begin 
+	  temp_sal := 0;
+	  for c in sal_cursor loop
+	    if to_char(c.hire_date,'yyyy') < '1995' then v_i := 0.05;
+	    elsif to_char(c.hire_date,'yyyy') < '1998' then v_i := 0.03;
+	    else v_i := 0.01;
+	    end if;
+	    
+	    update employees set salary = salary *(1+v_i) where employee_id = c.employee_id;
+	    temp_sal := temp_sal + c.salary * v_i; 
+	  end loop;
+	  
+	  dbms_output.put_line(temp_sal);
+	end;
     
     
 
 //执行
-declare
- v_temp number(10) := 0;
-begin 
-  add_sal(80,v_temp);
-  
-end;
+	declare
+	 v_temp number(10) := 0;
+	begin 
+	  add_sal(80,v_temp);
+	  
+	end;
 ```
 触发器的概念
 
