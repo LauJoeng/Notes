@@ -155,3 +155,46 @@ Linux系统是一个多用户多任务的操作系统，任何一个要使用系
 ##组管理和权限管理
 
 linux中每个用户必须属于一个组，不能独立于组外。文件有所有者，所在组和其他组的概念
+
+- ls -ahl,查看文件所有者
+- chown 用户名 文件名  修改文件所有者（change owner的缩写）
+- groupadd 组名  添加组
+- chgrp 组名 文件名  ： 修改文件所在组
+- usermod -g 组名 用户名 : 改变用户所在组
+- id 用户名 ： 查看用户信息
+
+rwx权限:r代表可读，w代表可写，x代表可执行，如果是目录代表可以进入
+
+- chmod 修改文件或目录的权限，可以用+，-，=变更权限，u代表所有者，g代表所在组，o代表其他人，a(all)代表所有人所有组。chmod u=wx，g=rx，o=x 文件目录名 表示给u赋xx权限，g赋xx权限，o赋xx权限。chmod o+w 文件目录名 表示给其他人增加一个 w 权限，chmod u-x表示去掉所有者的 x 权限
+- 可以通过数字改变权限，规则：r=4，w=2，x=1，chmod u=rwx，g=rx，o=x 文件目录名等价于chmod 751 文件目录名，即把他们的权值相加
+- chown修改文件所有者 chown newowner file 改变文件的所有者，chown newowner：newgroup file 改变用户的所有者和所有组 ，-r如果是目录，则使其下所有子文件或目录递归生效。
+
+##cron任务调度
+
+执行定时任务
+
+crontab [options]     -e编辑crondtab定时任务，-l查询crondtab任务，-r终止任务调度，service crond restart 重启任务调度
+
+##Linux磁盘分区、挂载
+
+lsblk 【-l】 查看磁盘挂载分区情况
+
+案例:给Linux系统增加一个新的硬盘，并且挂载到/home/newdisk
+
+1. 虚拟机添加硬盘
+2. 分区 ： fdisk /dev/sdb
+3. 格式化 ： mkfs -t ext4 /dev/sdb1
+4. 挂载 ： 先创建/home/newdisk 目录，挂载 mount /dev/sdb1 /home/newdisk
+5. 设置可以自动挂载(永久挂载，当重启系统，仍然可以挂载到指定目录)，在/etc/fstab 文件可以配置自动挂载，卸载用 umount /dev/sdb1 或 umount /newdisk
+
+###磁盘情况查询
+
+- df [options] 查看磁盘整体情况
+- df [options] /目录 查询指定目录占用磁盘的情况,-s 指定目录占用大小汇总，-h 带计量单位，-a 含文件，--max-dep=1 子目录深度，-c 列出明细的同时，增加汇总值
+
+案例:
+
+1. 统计/home文件夹下的文件个数 : ls -l /home | grep "^-" | wc -l
+2. 统计/home文件夹下的目录个数 ： ls -l /home | grep "^d" | wc -l
+3. 统计/home文件夹下文件的个数，包括子文件夹下的 ls -lr /home | grep "^-" | wc -l
+4. 以树状显示目录
