@@ -197,4 +197,68 @@ lsblk 【-l】 查看磁盘挂载分区情况
 1. 统计/home文件夹下的文件个数 : ls -l /home | grep "^-" | wc -l
 2. 统计/home文件夹下的目录个数 ： ls -l /home | grep "^d" | wc -l
 3. 统计/home文件夹下文件的个数，包括子文件夹下的 ls -lr /home | grep "^-" | wc -l
-4. 以树状显示目录
+4. 以树状显示目录 可能要先yum安装 tree ， 在用tree指令
+
+##Linux网络配置
+
+可以通过虚拟网络编辑器查看虚拟机的ip和网关
+
+网络环境配置
+
+1. 自动获取，在桌面通过网络连接配置。，缺点是每次获取的ip可能是不同的
+2. 指定固定的ip地址，直接修改文件来指定ip，并可以连接外网，编辑 /etc/sysconfig/network-scripts/ifcfg-eth0（准确说是eth0的网卡配置文件，多块网卡有多个配置文件），配置IPADDR,GATEWAY,DNS,以及把onboot设置为yes，把bootproto设置为static，可以使用service network restart指令使配置的网络重启生效
+
+##Linux进程管理
+
+Linux中，每个执行的程序(代码)都称为一个进程，每一个进程都分配一个id号，每一个进程都对应一个父进程，而这个父进程可以复制多个子进程，最大的父进程是init进程，分为前台和后台进程。
+
+ps [options] 指令可以查看系统执行的进程，可以不带参数。-a 显示当前终端的所有进程信息，-u 以用户的格式来显示进程的信息。-x 显示后台进程运行的参数，-e显示所有进程，-f以全格式显示。ps -aux 显示全部进程信息，包括用户名，进程id，cpu占用情况，内存占用情况，虚拟内存占用情况，物理内存占用情况，使用的终端，当前进程状态，s代表休眠，r代表运行中，启动时间，占用cpu的总时间，进程启动的命令行，可以用grep命令过滤查找，如 ps -aux | grep sshd 查看sshd服务。
+
+###终止进程kill和killall
+
+kill [options] 进程号（功能:通过进程号杀死进程）常用选项 ，-9 强制杀死
+
+killall 进程名 (功能:通过进程名称杀死进程，支持通配符)
+
+pstree	[options] 查看进程树，-p 显示进程pid，-u 显示进程所属用户
+
+###服务管理()
+
+服务即后台进程，一般一个服务会监听一个端口
+
+service 服务名 [start|stop|restart|reload|status]
+
+CentOS7.0后不在使用service，而是systemctl
+
+关闭防火墙，service iptables stop 立即生效。可以在windows下通过telnet ip地址 端口测试是否可以访问（需要打开telnet客户端）
+
+chkconfig命令可以给各个运行级别设置自启动/关闭，语法 chkconfig -l | grep xxx 查看服务，chkconfig --level 5 服务名 on/off ： 设置在指定级别该服务是否自启动，设置之后需要重启生效
+
+###动态监控进程
+
+top [选项] 该命令与ps很像，不过它会动态更新信息，类似windows任务管理器。选项 -p 以cpu使用率排序，默认就是此项。-m 以内存的使用率排序，-n 以pid排序，-d 指定刷新间隔时间。显示后可以按k指定要杀死的进程。可以查询指定进程。
+
+###监控网络状态 netstat [options]  -p 显示哪个进程在调用 ，-an 按一定顺序排列输出
+
+
+##rpm和yum
+
+###rpm全称是 RedHat Package Manager（RedHat包管理工具），类似windows的setup.exe
+
+- rpm包简单查询指令 rpm -qai | grep xx (q代表query ，a代表all，i代表information，还有l可以查看安装了哪些文件，f查看文件是哪个rpm包的)
+
+- 卸载rpm包 : rpm -e rpm包名，如果存在有其他包被其他包引用，会产生错误，可以带一个 --nodeps 参数强制删除
+- 安装rpm包，rpm -ivh rpm包全路径名称，i表示install，v表示verbose 提示，h代表hash 进度条
+
+
+###yum全称是 Yellow dog Updater, Modified，是一个在Fedora和RedHat以及CentOS中的Shell前端软件包管理器，可以自动处理依赖关系，并一次性安装所有依赖的软件包，使用yum必须联网
+
+- yum list | grep xx 软件列表
+- yum install xx 安装软件
+
+
+##Linux搭建JavaEE开发环境
+
+
+
+
