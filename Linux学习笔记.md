@@ -329,3 +329,214 @@ shell变量分为系统变量和用户自定义的变量，用set命令可以显
 条件判断
 
 [ condition ] (注意condition前后空格，非空返回真)
+
+![a](https://raw.githubusercontent.com/LauJoeng/Image/master/2018-7/shell1.PNG)
+
+	#!/bin/bash
+	if [ 89 -le 90 ]
+	then
+	echo "89小于等于90"
+	fi
+
+
+流程控制示例
+
+	#!/bin/bash
+	if [ $1 -ge 60]
+	then
+		echo "及格了"
+	elif [ $1 -lt 60 ]
+	then
+		echo "不及格"
+	fi
+
+
+case语句
+
+	case $变量名 in
+	 "值1"）
+	 执行代码
+	 ;;
+	
+	 "值2"）
+	 执行代码
+	 ;;
+	
+	 其他分支...
+	 
+	 *）
+	 如果不是以上值，执行下面此代码
+	 ;;
+	esac 
+
+示例
+
+	#!/bin/bash
+	case $1 in
+	"1")
+	echo "周一"
+	;;
+	"2")
+	echo "周二"
+	;;
+	*)
+	echo "other"
+	;;
+	esac
+
+
+for循环
+
+	for 变量in值1值2值3...
+	do
+		程序
+	done
+
+或者
+
+	for((初始值:循环控制条件:变量变化))
+	do
+		程序
+	done
+
+示例
+	
+	#/bin/bash
+	for i in "$*"
+	do
+		echo "the number is $i"
+	done
+	echo "----------------------------------"
+	for j in "$@"
+	do
+		echo "the number is $j"
+	done
+
+执行./testFor.sh 87 89 20,输出
+
+	the number is 87 89 20
+	----------------------------------
+	the number is 87
+	the number is 89
+	the number is 20
+
+可以看出$*和$@的区别
+
+示例
+
+	#!/bin/bash
+	SUM=0
+	for((i=1;i<=100;i++))
+	do
+		SUM=$[SUM+$i]
+	done
+	echo "sum=$SUM"
+
+while循环
+
+	while[ 条件判断式 ]
+	do
+		程序
+	done
+
+示例
+
+	SUM=0
+	i=0
+	while [ $i -le $1 ]
+	do
+	        SUM=$[$SUM+$i]
+	        i=$[$i+1]
+	done
+	echo "sum=$SUM"
+
+读取控制台的输入
+
+read [options] (参数)
+
+选项 -p:指定读取值时的提示符，-t：指定读取时等待的时间(秒)，如果指定时间内没有输入就不再等待了
+
+示例
+
+	#/bin/bash
+	
+	read -p "请输入一个数num1=" NUM1
+	echo "输入的值时num1=$NUM1"
+	read -t 10  -p "请输入一个数num2=" NUM2
+	echo "输入的值时num1=$NUM2"
+
+###函数
+
+####系统函数
+
+用法: 
+
+- basename [string] [suffix] (basename命令会删掉所有前缀包括最后一个' '字符，然后将字符串显示出来)
+- basename [pathname] [suffix] ，返回完整路径最后 / 的部分，常用于获取文件名
+- dirname 返回完整路径最后 / 的前面部分，常用于返回路径部分
+
+####自定义函数
+
+	[function]funname[()]
+	{
+		action;
+		[return int;]
+	}
+
+调用时直接使用函数名
+
+示例
+
+	#!/bin/bash
+	
+	#计算两个输入参数的和(用read输入)
+	function getSum(){
+		SUM=$[$n1+$n2]
+		echo "sum = $SUM"
+	}
+	
+	read -p "请输入n1=" n1
+	read -p "请输入n2=" n2
+	
+	getSum $n1 $n2
+
+综合案例
+
+1. 每天凌晨2:10备份数据库testDB到/data/backup/db
+2. 备份开始和备份结束能够给出相应的提示信息
+3. 备份后的文件要求以备份时间为文件名，并打包成tar.gz的形式，如2018-08-18_230201.tar.gz
+4. 在备份的同时，检查是否有10天前备份的数据库文件，如果有就将其删除
+
+代码如下
+
+	#/bin/bash
+	echo "---开始备份---"
+	echo "---备份路径 ： $BACKUP/$DATETIME.tar.gz"
+	
+	#主机
+	HOST=localhost
+	#用户名
+	DB_USER=root
+	#密码
+	DB_PWD=root
+	#备份数据的数据库名
+	DATABASE=testDB
+	#创建备份的路径
+	#如果备份的路径文件存在就直接使用，否则创建
+	[ ! -d "$BACKUP/$DATETIME" ] && mkdir -p "$BACKUP/$DATETIME"
+	#执行mysql的备份数据库指令
+	mysqldump -u${DB_USER} -p{DB_PWD} --host=#HOST $DATABASE | gzip > $BACKUP/$DATETIME/$DATETIEM.sql.gz
+	##打包备份文件
+	cd $BACKUP
+	tar -zcvf $DATETIME.tar.gz $DATETIME
+	#删除临时目录
+	rm -rf $BACKUP/$DATETIME
+	
+	#删除10天前的备份文件
+	find $BACKUP -mtime +10 -name "*.tar.gz" -exec rm -rf {} \
+	echo "====备份文件成功======"
+
+
+
+
+
