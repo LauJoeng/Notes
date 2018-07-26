@@ -564,6 +564,100 @@ JSP，Velocity，FreeMarker，Thymeleaf，SpringBoot推荐使用Thymeleaf
 	</body>
 	</html>
 ```
-3. 语法规则
 
-- th:text:改变当前元素里面的文本内容。可以用 th:任意html属性 ，来替换原生属性
+表达式
+
+```
+Simple expressions: 
+	Variable Expressions: ${...}:获取变量值。OGNL
+		1. 获取属性，调用方法
+		2. 使用内置的基本对象
+				#ctx: the context object.
+				#vars: the context variables.
+				#locale: the context locale.
+				#request: (only in Web Contexts) the HttpServletRequest object.
+				#response: (only in Web Contexts) the HttpServletResponse object.
+				#session: (only in Web Contexts) the HttpSession object.
+				#servletContext: (only in Web Contexts) the ServletContext object.
+		3. 工具对象
+	Selection Variable Expressions: *{...}和${}功能相似，补充使用，配合th:object使用
+	Message Expressions: #{...} ： 获取国际化内容
+	Link URL Expressions: @{...}：定义url
+	Fragment Expressions: ~{...}：片段引用表达式
+Literals 
+	Text literals: 'one text', 'Another one!',…
+	Number literals: 0, 34, 3.0, 12.3,…
+	Boolean literals: true, false
+	Null literal: null
+	Literal tokens: one, sometext, main,…
+Text operations: 
+	String concatenation: +
+	Literal substitutions: |The name is ${name}|
+Arithmetic operations: 
+	Binary operators: +, -, *, /, %
+	Minus sign (unary operator): -
+Boolean operations: 
+	Binary operators: and, or
+	Boolean negation (unary operator): !, not
+Comparisons and equality: 
+	Comparators: >, <, >=, <= (gt, lt, ge, le)
+	Equality operators: ==, != (eq, ne)
+Conditional operators: 
+	If-then: (if) ? (then)
+	If-then-else: (if) ? (then) : (else)
+	Default: (value) ?: (defaultvalue)
+Special tokens: 
+	No-Operation: _	
+```
+
+
+##SpringBoot 对SpringMVC的配置
+
+如何修改SpringBoot的默认配置
+
+模式:
+1. SpringBoot在自动配置很对组件的时候，先看容器中有没有用户配置的(@Bean、@Component)，如果有就用户配置的，没有才自动配置，如果有些组件可以有多个(如ViewResolver)将用户配置的和自己默认的组合起来
+2. 扩展MVC
+```
+<mvc:view-controller path="/hello" view-name="success"/>
+    <mvc:interceptors>
+        <mvc:interceptor>
+            <mvc:mapping path="/hello"/>
+            <bean></bean>
+        </mvc:interceptor>
+    </mvc:interceptors>
+```
+**编写一个配置类(@Configuration),WebMvcConfigurationSupport，不能标注@EnableWebMvc**,既保留了所有的自动配置又用到了我们的扩展配置
+
+```
+//使用WebMvcConfigurerAdapter可以来扩展SpringMVC功能
+@Configuration
+public class MyMvcConfig extends WebMvcConfigurationSupport {
+    @Override
+    protected void addViewControllers(ViewControllerRegistry registry) {
+        //浏览器发送/yang 请求来到success页面
+        registry.addViewController("/yang").setViewName("success");
+    }
+}
+```
+
+原理:
+
+1. WebMvcAutoConfiguration是SpringMVC自动配置类
+2. 在做其他自动配置时会导入@Import(EnableWebMvcConfiguration.class)
+3. 容器中所有的WebMvcConfiguration都会一起起作用
+4. 我们的配置类也会被调用
+
+可以在配置类上添加@EnableWebMvc来全面接管SpringMVC的配置
+
+
+##RestfulCRUD
+
+国际化
+
+1. 编写国际化配置文件
+2. 使用ResourceBundleMessageSource管理国际化
+3. 在页面使用fmt:message去除国际化功能
+
+步骤：
+1. 编写国际化配置文件，抽取页面需要显示的国际化消息
