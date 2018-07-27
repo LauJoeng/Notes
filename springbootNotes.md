@@ -661,3 +661,46 @@ public class MyMvcConfig extends WebMvcConfigurationSupport {
 
 步骤：
 1. 编写国际化配置文件，抽取页面需要显示的国际化消息
+2. SpringBoot自动配置好了管理国际化资源组件
+```
+@EnableConfigurationProperties
+public class MessageSourceAutoConfiguration {
+```
+3. 去页面获取国际化的值
+4. 通过点击链接切换国际化,自己编写一个LocaleResolver并把它加入到容器中即可
+
+```
+/**
+ * 可以链接上携带上区域信息
+ */
+public class MyLocaleResolver implements LocaleResolver {
+    @Override
+    public Locale resolveLocale(HttpServletRequest request) {
+        String l=request.getParameter("l");
+        Locale locale = null;
+        if(!StringUtils.isEmpty(l)){
+            String[] split = l.split("_");
+            locale=new Locale(split[0],split[1]);
+        }
+        return locale;
+    }
+
+    @Override
+    public void setLocale(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Locale locale) {
+
+    }
+}
+
+```
+
+开发期间模板引擎页面修改以后要立即生效需要禁用缓存，设置spring.thymeleaf.cache=false
+
+页面修改完成后按Ctrl + f9重新编译
+
+登录错误提示
+
+```
+<p style="color: red" th:text="${msg}" th:if="${not #strings.isEmpty(msg)}"></p>
+```
+
+**拦截器进行登录检查**
