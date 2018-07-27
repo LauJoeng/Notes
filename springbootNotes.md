@@ -704,3 +704,101 @@ public class MyLocaleResolver implements LocaleResolver {
 ```
 
 **拦截器进行登录检查**
+```
+
+/**
+ * 登录检查
+ */
+public class LoginHandlerInterceptor implements HandlerInterceptor {
+
+    /**
+     * 目标方法执行之前
+     * @param request
+     * @param response
+     * @param handler
+     * @return
+     */
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws ServletException, IOException {
+        Object user = request.getSession().getAttribute("loginUser");
+        if(user == null){
+            //未登录，返回登录页面
+            request.setAttribute("msg","请先登录");
+            request.getRequestDispatcher("/index.html").forward(request,response);
+            return false;
+        }
+        return true;
+    }
+    @Override
+    public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) {
+
+    }
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+
+    }
+}
+```
+##CRUD员工列表
+
+1. RestfulCRUD：
+
+|  - | 普通CRUD | RestfulCRUD | 
+| - | :-: | -: | 
+| 查询 | getEmp| emp --GET | 
+| 添加  | addEmp?xxx | emp--Post |
+| 修改 | updateEmp?xxx | emp/{id}--PUT |
+| 删除 |deleteEmp?id=xx |emp/{id}--DELETE|
+
+###thymeleaf公共页面抽取
+
+```
+1.抽取公共片段
+<div th:fragment="copy">     
+ 	&copy; 2011 The Good Thymes Virtual Grocery   
+</div> 
+
+2.引入公共片段
+<div th:insert="~{footer :: copy}"></div> 
+~{template::selector} 模板名
+~{tempplate::fragmentname}模板名:片段名
+
+3.默认效果
+insert的功能片段在div中
+如果使用:th:insert等属性引入，可以不写~{},直接使用template:selector,
+行内写法可以加上[[~{}]],[(~{})]
+```
+
+三种引入功能片段的th属性
+
+- th:insert  将公共片段整个插入到声明引入的元素中
+- th:replace  将声明引入的元素替换为公共片段
+- th:include  将被引入的片段包含进这个标签中
+
+```
+<footer th:fragment="copy"> 
+ 	&copy; 2011 The Good Thymes Virtual Grocery 
+</footer>
+
+<div th:insert="footer :: copy"></div>
+<div th:replace="footer :: copy"></div>
+<div th:include="footer :: copy"></div>
+
+效果:
+
+<div>    
+	<footer>      
+		&copy; 2011 The Good Thymes Virtual Grocery    
+	</footer>  
+</div>
+
+<footer>    
+	&copy; 2011 The Good Thymes Virtual Grocery  
+</footer>
+
+<div>    
+	&copy; 2011 The Good Thymes Virtual Grocery  
+</div> 
+```
+
+引入片段的时候可以传入参数
