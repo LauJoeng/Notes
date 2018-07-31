@@ -802,3 +802,206 @@ insert的功能片段在div中
 ```
 
 引入片段的时候可以传入参数
+
+
+##定制错误页面
+
+SpringBoot对不存在页面有一个默认处理，客户端请求会返回一个json数据，浏览器会进入一个默认页面，原因是在BasicErrorController中有两个方法，可以针对客户端和浏览器请求做出不同处理，客户端和浏览器请求中请求头不一样。可以参照ErrorMvcAutoConfiguration类
+
+该类给容器添加了以下组件
+
+1. DefaultErrorAttributes 这个类可以共享错误信息
+2. BasicErrorController
+3. ErrorPageCustomer
+4. DefaultErrorViewResolver
+
+一旦出现4xx或5xx之类的错误，ErrorPageCustomer就会生效，就会去往/error请求，而这个请求会被BasicErrorController处理
+
+1. 如何定制错误页面
+ - 有模板引擎的情况下，:error/状态码  [将错误页面命名为 错误状态码.html放在模板引擎文件夹里面的error文件加下]，发生此状态码的错误就会来到对应的页面，也可以用 4xx,5xx来匹配所有这种类型的错误，但有限匹配精确数字页面。
+ - 没有模板引擎(模板引擎找不到错误页面)，那就去静态资源文件夹下找。
+ - 以上都没有错误页面，就是去往SpringBoot默认错误处理页面
+
+定制错误的json数据
+
+```
+@ControllerAdvice
+public class MyExceptionHandler {
+
+    @ResponseBody
+    @ExceptionHandler(UsernameNotExistException.class)
+    public Map<String, Object> handleException(Exception e){
+        Map<String,Object>map = new HashMap<>();
+        map.put("code","user not exist");
+        map.put("message",e.getMessage());
+        return map;
+    }
+}
+//无自适应效果
+
+
+//转发到"/erro"页面
+ @ResponseBody
+    @ExceptionHandler(UsernameNotExistException.class)
+    public String handleException(Exception e){
+        Map<String,Object>map = new HashMap<>();
+        map.put("code","user not exist");
+        map.put("message",e.getMessage());
+        //转发到error
+        return "forward:/error";
+    }
+```
+
+出现错误请求会去往/error请求，会在BasicErrorController处理，响应出去可以获取数据是由getErrorAttributes得到的(是AbstractErrorController(ErrorController)规定的方法);
+完全编写一个类ErrorController或AbstractErrorController的子类的实现类，放在容器中
+页面上能用的数据，或者是json能返回的数据都是通过ErrorAttributes.getErrorAttributes得到，容器中DefaultErrorAttributes.getErrorAttributes（）默认进行数据处理
+
+自定义
+```
+@Component
+public class MyErrorAttributes extends DefaultErrorAttributes {
+    @Override
+    public Map<String, Object> getErrorAttributes(WebRequest webRequest, boolean includeStackTrace) {
+        Map<String, Object> map = super.getErrorAttributes(webRequest, includeStackTrace);
+        map.put("company","yang");
+        return map;
+    }
+}
+```
+
+最终效果：响应是自适应的，可以通过定制ErrorAttributes改变需要返回的内容
+
+
+
+
+
+##嵌入式Servlet容器
+
+springBoot默认使用Tomcat作为嵌入式Servlet容器
+
+- 如何定制和修改Servlet容器相关的配置
+ - 如何修改额server有关的配置
+	```
+	server.port=8088
+	serve.context-path=/myapplication
+	
+	//通用的Servlet容器设置
+	server.xxx
+	//Tomcat设置
+	server.tomcat.xxx
+	```
+ - 编写一个EmbeddedServletContainerCustomizer：嵌入式的Servlet容器的定制器，来修改Servlet容器的配置
+	```
+	@Bean
+	public WebServerFactoryCustomizer webServerFactoryCustomizer(){
+	   return  new WebServerFactoryCustomizer<ConfigurableServletWebServerFactory>(){
+	       //定制servlet容器相关规则
+	        @Override
+	        public void customize(ConfigurableServletWebServerFactory factory) {
+	            factory.setPort(8089);
+	        }
+	    };
+	}
+	```
+- 注册三大组件（Servlet，Filter，Listener）
+ 由于SprigBoot默认是以jar包方式启动嵌入式Servlet容器来启动web应用，没有web.xml文件。注册三大组件用一下方式。
+
+ServletRegistrationBean
+```
+//注册三大组件
+    @Bean
+    public ServletRegistrationBean<MyServlet> myServlet(){
+        ServletRegistrationBean<MyServlet> servletRegistrationBean = new ServletRegistrationBean<>(new MyServlet(), "/myServlet");
+        return servletRegistrationBean;
+    }
+```
+FilterRegistrationBean
+```
+@Bean
+    public FilterRegistrationBean<MyFilter>myFilter(){
+        FilterRegistrationBean<MyFilter>myFilterFilterRegistrationBean = new FilterRegistrationBean<>();
+        myFilterFilterRegistrationBean.setFilter(new MyFilter());
+        myFilterFilterRegistrationBean.setUrlPatterns(Arrays.asList("/hello","/myServlet"));
+        return myFilterFilterRegistrationBean;
+    }
+```
+
+ServletListenerRegistrationBean
+```
+@Bean
+    public ServletListenerRegistrationBean myListener(){
+        ServletListenerRegistrationBean<MyListener> myListenerServletRegistrationBean = new ServletRegistrationBean<MyListener>(new MyListener());
+        return myListenerServletRegistrationBean;
+    }
+```
+- SpringBoot也能支持其他Servlet容器
+
+首先SpringBoot可以通过ServletRegistrationBean，FilterRegistrationBean，ServletListenerRegistrationBean来注册Servlet，Filter，Listener三大组件。
+
+```
+ //注册三大组件
+    @Bean
+    public ServletRegistrationBean<MyServlet> myServlet(){
+        ServletRegistrationBean<MyServlet> servletRegistrationBean = new ServletRegistrationBean<>(new MyServlet(), "/myServlet");
+        return servletRegistrationBean;
+    }
+
+    @Bean
+    public FilterRegistrationBean<MyFilter>myFilter(){
+        FilterRegistrationBean<MyFilter>myFilterFilterRegistrationBean = new FilterRegistrationBean<>();
+        myFilterFilterRegistrationBean.setFilter(new MyFilter());
+        myFilterFilterRegistrationBean.setUrlPatterns(Arrays.asList("/hello","/myServlet"));
+        return myFilterFilterRegistrationBean;
+    }
+
+    @Bean
+    public ServletListenerRegistrationBean myListener(){
+        ServletListenerRegistrationBean<MyListener> myListenerServletRegistrationBean = new ServletListenerRegistrationBean<MyListener>(new MyListener());
+        return myListenerServletRegistrationBean;
+    }
+```
+
+- SpringBoot默认使用Tomcat，也支持其他Servlet容器
+
+Jetty:适合长连接应用，如WEB聊天等需要长时间保持连接的应用
+Udertow：这个容器不支持JSP，但是一个高性能非阻塞的容器，适合高并发应用
+
+在pom文件里配置切换容器:
+```
+<dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <exclusions>
+                <exclusion>
+                    <artifactId>spring-boot-starter-tomcat</artifactId>
+                    <groupId>org.springframework.boot</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!--引入其他Servlet容器-->
+        <dependency>
+            <groupId>spring-boot-starter-jetty</groupId>
+            <artifactId>org.springframework.boot</artifactId>
+        </dependency>
+```
+##SpringBoot嵌入式Servlet容器自动配置原理
+
+- SpringBoot根据依赖情况，给容器中添加相应的EmbeddedServletContainerFactory
+- 容器中某个组件要创建对象就会使后置处理器EmbeddedServletContainerCustomizerBeanPostProcessor起作用，只要是嵌入式Servlet容器工厂，后置处理器就工作
+- 后置处理器，从容器中获取所有的EmbeddedServletContainerCustomizer，调用定制器的定制方法
+
+##SpringBootServlet容器启动原理
+
+获取嵌入式的Servlet容器工厂
+
+1. SpringBoot应用启动运行run方法
+2. refreshContext(context)SpringBoot应用属性IOC容器，创建IOC容器对象，并初始化容器，创建容器中每一个组件；如果是web应用创建web版的IOC容器，否则创建默认IOC容器
+3. refresh(context)刷新刚才创建的IOC容器
+4. onRefresh()：web的IOC容器重写了onRefresh方法
+5. 获取嵌入式的Servlet容器EmbeddedServletContainerFactory
+6. 从IOC容器中获取该组件，上面的工厂对象就来创建，从而触发上面自动配置原理的后置处理器起作用
+7. 最后创建完成并启动
+
+先启动嵌入式Servlet容器，然后再创建其他对象，IOC容器启动创建嵌入式Servlet容器
