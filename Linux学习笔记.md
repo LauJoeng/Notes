@@ -208,6 +208,8 @@ lsblk 【-l】 查看磁盘挂载分区情况
 1. 自动获取，在桌面通过网络连接配置。，缺点是每次获取的ip可能是不同的
 2. 指定固定的ip地址，直接修改文件来指定ip，并可以连接外网，编辑 /etc/sysconfig/network-scripts/ifcfg-eth0（准确说是eth0的网卡配置文件，多块网卡有多个配置文件），配置IPADDR,GATEWAY,DNS,以及把onboot设置为yes，把bootproto设置为static，可以使用service network restart指令使配置的网络重启生效
 
+window开虚拟机连接不上网时可以检查VMWareDHCP和WMWareNAT服务是否打开
+
 ##Linux进程管理
 
 Linux中，每个执行的程序(代码)都称为一个进程，每一个进程都分配一个id号，每一个进程都对应一个父进程，而这个父进程可以复制多个子进程，最大的父进程是init进程，分为前台和后台进程。

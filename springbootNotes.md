@@ -1005,3 +1005,148 @@ Udertow：这个容器不支持JSP，但是一个高性能非阻塞的容器，�
 7. 最后创建完成并启动
 
 先启动嵌入式Servlet容器，然后再创建其他对象，IOC容器启动创建嵌入式Servlet容器
+
+
+##Docker
+
+Docker是一个开源的应用容器引擎，基于Go语言并遵从Apache2.0协议开源。Docker可以让开发者打包他们的应用以及依赖包到一个轻量级、可以移植的容器中，然后发布到任何流行的Linux机器上，也可以实现虚拟化。容器完全是沙箱机制，相互之间不会有任何接口，更重要的是容器性能开销极低。
+
+- docker主机(Host)：安装了Docker程序的机器。
+- docker客户端(Client)：连接docker主机进行操作，与docker守护进程进行通信
+- docker仓库(Registry):用来保存各种打包好的软件镜像
+- docker镜像(Images):软件打包好的镜像。
+- docker容器(Container)：镜像启动后的实例称为一个容器
+
+使用Docker的步骤；
+
+1. 安装Dockcer
+2. 去Docker仓库找到这个软件的镜像
+3. 使用Docker运行这个镜像，这个镜像会生成一个Docker容器
+4. 对容器的启动停止就是对软件的启动停止
+
+##安装Docker
+
+docker要求CentOS内核版本大于3.10，可以使用uname -r查看内核版本，使用yum update 更新内核版本
+
+安装只需要是用yum install docker即可
+
+systemctl start docker 启动docker
+
+设值docker开机启动，systemctl enable docker
+
+停止docker  systemctl stop docker
+
+查找镜像  docker search 镜像名
+
+可以用 docker pull 镜像名:[tag] 来下载镜像
+
+docker images 查看当前有哪些镜像
+
+docker rmi image-id  用镜像id删除镜像
+
+###docker容器操作
+
+软件镜像	---运行镜像---产生一个容器(正在运行的软件)
+
+
+![常用命令](https://github.com/LauJoeng/Image/blob/master/2018-8/dockerOrder.PNG?raw=true)
+
+```
+docker search tomcat  搜索镜像
+docker pull tomcat 拉取镜像
+docker run --name mytomcat -d tomcat:latest 启动镜像
+docker ps 查看运行中的容器
+docker stop 容器id 停止镜像
+docker ps -a 查看所有容器
+docker rm 容器id  删除容器
+docker start 容器id 启动容器
+
+docker run -d -p 8888:8080 tomcat   ：   -d后台运行，-p将主机端口映射到容器内部端口
+
+docker logs 容器id  查看启动日志
+
+可以通过service firewalld status 查看防火墙是否开启，可以关闭，systemctl stop firewalld
+
+每一个镜像在网站上都给出了命令参考文档
+```
+
+##SpringBoot数据访问
+
+##JDBC
+
+```
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-jdbc</artifactId>
+</dependency>
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <scope>runtime</scope>
+</dependency>
+```
+
+```
+#schema指定建表sql脚本，会在启动应用之前执行，不指定要使用默认文件名
+spring:
+  datasource:
+    username: root
+    password: 123456
+    url: jdbc:mysql://192.168.22.129:3306/jdbc
+    driver-class-name: com.mysql.jdbc.Driver
+    schema:
+      - classpath:department.sql
+      - classpath:employee.sql
+	
+```
+
+效果SpringBoot2默认使用com.zaxxer.hikari.HikariDataSource数据源
+数据源的相关配置都在DataSourceProperties里面；
+
+自动配置原理:org.springframework.boot.autoconfigure.jdbc1
+
+1. 参考DataSourceConfiguration类，根据配置创建数据源，SpringBoot2默认使用Hikari数据源，可以使用Spring.datasource.type指定自定义数据源类型
+2. SpringBoot默认支持org.apache.commons.dbcp2.BasicDataSource，com.zaxxer.hikari.HikariDataSource，org.apache.tomcat.jdbc.pool.DataSource三种类型数据源，也可以使用以上三种之外的数据源
+3. DataSourceInitializer，是一个ApplicationListener：作用
+ - runSchemaScripts()；运行建表语句
+ - runDataScripts()；运行插入数据的sql语句
+ 默认需要将文件命名为
+```
+schema-*.sql 和 data-*.sql
+```
+4. 默认了JDBCTemplate操作数据库
+
+###整合MyBatis
+
+```
+<dependency>
+    <groupId>org.mybatis.spring.boot</groupId>
+    <artifactId>mybatis-spring-boot-starter</artifactId>
+    <version>1.3.1</version>
+</dependency>
+```
+
+自定义mybatis的配置规则：给容器添加一个ConfigurationCostomizer；
+
+```
+//开启驼峰命名映射
+@org.springframework.context.annotation.Configuration
+public class MyBatisConfig {
+
+    @Bean
+    public ConfigurationCustomizer configurationCustomizer(){
+        return new ConfigurationCustomizer(){
+
+            @Override
+            public void customize(Configuration configuration) {
+                configuration.setMapUnderscoreToCamelCase(true);
+            }
+        };
+    }
+```
+```
+//使用MapperScan批量扫描mapper接口
+@MapperScan(value = "com.yang.springboot2.mapper")
+```
+
+
